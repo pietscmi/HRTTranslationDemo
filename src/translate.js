@@ -34,7 +34,7 @@ function main(params) {
   const defaultLanguage = 'en';
 
   return new Promise(function (resolve, reject) {
-
+    console.log(params);
     try {
 
       // *******TODO**********
@@ -49,15 +49,54 @@ function main(params) {
       // found in the catch clause below
 
       // pick the language with the highest confidence, and send it back
-      resolve({
-        statusCode: 200,
-        body: {
-          translations: "<translated text>",
-          words: 1,
-          characters: 11,
-        },
-        headers: { 'Content-Type': 'application/json' }
+
+      const languageTranslator = new LanguageTranslatorV3({
+        version: '2018-05-01',
+        authenticator: new IamAuthenticator({
+          apikey: params.apikey,
+        }),
+        url: params.url,
       });
+
+      const defaultParams = {
+        text: 'Translator could not recognise the input values. Printing and translating this default string to spain ',
+        modelId: 'en-es',
+      };
+
+      var objWithParams;
+      if (params !== undefined && 'text' in params.body && params.body.text !== undefined && params.body.text !== null
+          && 'language' in params.body && params.body.language !== undefined && params.body.language !== null) {
+        objWithParams = params.body;
+        objWithParams.modelId = '' + params.body.language + '-en';
+        console.log("Translating input");
+        console.log(objWithParams)
+      } else {
+        console.log("Translating default");
+        objWithParams = defaultParams;
+      }
+
+      languageTranslator.translate(objWithParams)
+          .then(translationResult => {
+            console.log(JSON.stringify(translationResult, null, 2));
+            console.log(translationResult.result);
+            resolve({
+              statusCode: 200,
+              body: {
+                originText: objWithParams.text,
+                translations: translationResult.result.translations[0].translation,
+                words: translationResult.result.word_count,
+                characters: translationResult.result.character_count,
+              },
+              headers: { 'Content-Type': 'application/json' }
+            });
+          })
+          .catch(err => {
+            console.log('error:', err);
+            resolve(getTheErrorResponse('Could not translate text', defaultLanguage));
+          });
+
+
+
          
     } catch (err) {
       console.error('Error while initializing the AI service', err);
