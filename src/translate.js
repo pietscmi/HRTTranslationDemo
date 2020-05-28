@@ -37,19 +37,6 @@ function main(params) {
     console.log(params);
     try {
 
-      // *******TODO**********
-      // - Call the language translation API of the translation service
-      // see: https://cloud.ibm.com/apidocs/language-translator?code=node#translate
-      // - if successful, resolve exatly like shown below with the
-      // translated text in the "translation" property,
-      // the number of translated words in "words"
-      // and the number of characters in "characters".
-
-      // in case of errors during the call resolve with an error message according to the pattern
-      // found in the catch clause below
-
-      // pick the language with the highest confidence, and send it back
-
       const languageTranslator = new LanguageTranslatorV3({
         version: '2018-05-01',
         authenticator: new IamAuthenticator({
@@ -68,17 +55,14 @@ function main(params) {
           && 'language' in params.body && params.body.language !== undefined && params.body.language !== null) {
         objWithParams = params.body;
         objWithParams.modelId = '' + params.body.language + '-en';
-        console.log("Translating input");
-        console.log(objWithParams)
       } else {
-        console.log("Translating default");
+        console.log("Translating default text");
         objWithParams = defaultParams;
       }
 
       languageTranslator.translate(objWithParams)
           .then(translationResult => {
             console.log(JSON.stringify(translationResult, null, 2));
-            console.log(translationResult.result);
             resolve({
               statusCode: 200,
               body: {
@@ -94,8 +78,6 @@ function main(params) {
             console.log('error:', err);
             resolve(getTheErrorResponse('Could not translate text', defaultLanguage));
           });
-
-
 
          
     } catch (err) {
